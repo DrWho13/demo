@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Spring Boot and Thymeleaf example</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<style>
+.hidden {
+	visibility: hidden;
+	over-flow: hidden;
+	width: 0px;
+	height: 0px
+}
+.table
+{ 
+    border: 1px; !important;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 50px; important!;
+    width: 100%;
+}
+
+.table td {
+	text-align: center;
+	vertical-align: center;
+}
+/* .table > tbody > tr > td {
+	border-top: none; !important;
+} */
+
+.demo label {
+	top:3px; left:15px;
+	margin-right:30px;     
+	position:relative;     
+}  
+
+input.cbx, {
+  visibility: hidden;
+}
+
+input.cbx:checked:after, input.cbx:after {
+  visibility: visible;
+  font-family: FontAwesome;
+  font-size:25px;height: 17px; width: 17px;
+  position: relative;
+  top: -3px;
+  left: 0px;
+  background-color:#FFF;
+  display: inline-block;
+}
+
+input.cbx:checked:after {
+  content: '\f14a';
+}
+
+input.cbx:after {
+  content: '\f096';
+}
+
+.divider {
+    display: block;
+    margin: 20px auto;
+    content: "";
+    width: 70px;
+    height: 5px;
+	background: #EE3B24;
+}
+
+i, .submitButton {
+	-moz-transition: all .2s ease-in;
+    -o-transition: all .2s ease-in;
+    -webkit-transition: all .2s ease-in;
+    transition: all .5s ease-in-out;
+    #background: #f5f5f5; 
+    #padding: 20px;
+}
+
+i:hover {
+	color: #EE3B24;
+}
+
+
+h2 {
+	margin-bottom: 20px;
+}
+
+.submitButton {
+	width: 100px;
+	height: 50px;
+	font-size: 18px;
+	font-weight: bold;
+	margin-top: 20px;
+	background-color: black;
+	border: 3px solid black;
+	color: white;
+}
+
+.submitButton:hover {
+	background-color: #EE3B24;
+}
+</style>
+
+<!-- add a grid later if there's time for a responsive design -->
+<!--  no time for proper styling or proper css structure :/ -->
+<script type="text/javascript">
+
+	
+
+	/* var request1 = $.ajax({
+		type: "GET",		
+		url: "http://localhost:8080/getLocation",
+		contentType: "application/json; charset=utf-8",
+		dataType: "text",
+		success: function(data, status, jqXHR) {
+			// do stuff
+			console.log("success");
+			console.log(data, status);
+		},
+		error: function(jqXHR, status) {
+			// error handling?
+			console.log("error");
+		}
+	}); */
+	
+	
+	function request1(data) {
+		console.log(data);
+		return $.ajax({
+			type: "POST",
+			url: "http://localhost:8080/getLocation",
+			data: {
+				customerID : data
+			},
+			/* contentType: "application/json; charset=utf-8",
+			dataType: "text", */
+			success: function(data, status, jqXHR) {
+				// do stuff
+				console.log("success");
+				console.log(data, status);
+			},
+			error: function(jqXHR, status) {
+				// error handling?
+				console.log("error");
+			}
+		});
+	}
+	
+	function createDummyCookie() {
+		document.cookie="customerID=123";
+	}
+	
+	function readDummyCookie() {
+		var cookieValue = document.cookie;
+		//console.log(cookieValue);
+		return cookieValue;
+	}
+	
+  	
+	function request2(data) {
+		console.log("already have data from the previous request, should be Glasgow string", data)
+		$.ajax({
+		type: "POST",
+		url: "http://localhost:8080/getCatalog",
+		/* contentType: "application/json; charset=utf-8",
+		dataType: "application/json", */
+		data: {
+			location:data
+		},
+		success: function(data, status, jqXHR) {
+			console.log("success2");
+			console.log(data, status, jqXHR);
+			console.log(data);
+			$("#loadingMessage").hide()
+			var londonOrLiverpool = data.search("london");
+			if (londonOrLiverpool === -1) {
+				console.log("inside liverpool stuff")
+				$("#selectionFormDivLondon").hide();
+				$("#selectionFormDivLiverpool").show();
+			} else {
+				console.log("inside london stuff")
+				$("#selectionFormDivLondon").show();
+				$("#selectionFormDivLiverpool").hide();
+			}
+			
+			// add the returned html to the form tag
+		},
+		error: function(jqXHR, status) {
+			// error handling?
+			console.log("jqxhr: " + jqXHR);
+			console.log("status: " + status);
+			console.log("error");
+		}
+	});
+	}
+	
+	var array = [];
+	
+    	$(document).ready(function() {
+    		createDummyCookie();
+    		var cookieValueGoingToLocationService = readDummyCookie();
+    		console.log(cookieValueGoingToLocationService);
+    		$.when(request1(cookieValueGoingToLocationService)).then(request2);
+    		
+    		$(".cbx").change(function() {
+    			if ($(this).is(":checked")) {
+    				array.push($(this)[0].name);
+    				$("#currentSelections").find("tbody")
+    					.append($("<tr>")
+    							.append($("<td>")
+    									.text($(this)[0].name)
+    										.append($("</td>")
+    												.append($("</tr>")
+    														))));
+    			} else {
+    				$("#currentSelections tr td:contains('" + $(this)[0].name + "')").remove();
+    				var x = array.indexOf($(this)[0].name);
+    				array.splice(x, 1);
+    			}
+    			//console.log(array);
+    		});
+    		$(":checkbox").change(function() {
+    			if ($("#selectionFormDivLondon input:checked, #selectionFormDivLiverpool input:checked").length > 0) {
+    				console.log("at least one checkbox is checked");
+    				$("#currentSelections i").removeClass("fa fa-shopping-cart fa-5x").addClass("fa fa-cart-plus fa-5x");
+    			} else {
+    				$("#currentSelections i").removeClass("fa fa-cart-plus fa-5x").addClass("fa fa-shopping-cart fa-5x");
+    			}
+    		});
+    	});
+    </script>
+</head>
+<body>
+<div class="container">
+	<div class="text-center">
+		<h1>Select products:</h1>
+		<div class="divider" />
+		<!-- <p class="lead"></p> -->
+	</div>
+	<!-- <h3>Spring Boot and Thymeleaf</h3> -->
+	<p class="text-center" id="loadingMessage">Loading...</p>
+	<!-- <div id="selectionFormDivLondon" style="display:none"> -->
+		<div class="row">
+			<form role="form" id="selectionFormDivLondon" action="#" th:action="@{/confirmation}" th:object="${userChoices}" method="post" style="display:none">
+				<div class="col-xs-6">
+					<h2>Sports</h2>
+					<div class="demo form-group">
+						<input id="box1" type="checkbox" class="cbx" name="arsenalTvCheckbox" th:field="*{arsenalTv}" /><!--Arsenal TV<br />--><label>Arsenal TV</label>
+					</div>
+					<div class="demo form-group">
+						<input type="checkbox" class="cbx" name="chelseaTvCheckbox" th:field="*{chelseaTv}" /><!--Chelsea TV<br />--><label>Chelsea TV</label>
+					</div>
+					<input class="submitButton" type="submit" value="Checkout" />	
+				</div>
+				<div class="col-xs-6">
+					<h2>News</h2>
+					<div class="demo form-group">
+						<input type="checkbox" class="cbx" name="skyNewsCheckbox" th:field="*{skyNews}" /><!--Sky News TV<br />--><label>Sky News TV</label>
+					</div>
+					<div class="demo form-group">
+						<input type="checkbox" class="cbx" name="skySportsNewsCheckbox" th:field="*{skySportsNews}" /><!--Sky Sports News<br />--><label>Sky Sports News</label>
+					</div>					
+				</div>
+			</form>
+		</div>
+		
+		
+		
+		
+		<div class="row">
+			<form role="form" id="selectionFormDivLiverpool" action="#" th:action="@{/confirmation}" th:object="${userChoices}" method="post" style="display:none">
+				<div class="col-xs-6">
+					<h2>Sports</h2>
+					<div class="demo form-group">
+						<input id="box1" type="checkbox" class="cbx" name="liverpoolTvCheckbox" th:field="*{liverpoolTv}" /><!--Liverpool TV<br />--><label>Liverpool TV</label>						
+					</div>
+					<input class="submitButton" type="submit" value="Checkout" />	
+				</div>
+				<div class="col-xs-6">
+					<h2>News</h2>
+					<div class="demo form-group">
+						<input type="checkbox" class="cbx" name="skyNewsCheckbox" th:field="*{skyNews}" /><!--Sky News TV<br />--><label>Sky News TV</label>
+					</div>
+					<div class="demo form-group">
+						<input type="checkbox" class="cbx" name="skySportsNewsCheckbox" th:field="*{skySportsNews}" /><!--Sky Sports News<br />--><label>Sky Sports News</label>
+					</div>					
+				</div>
+			</form>
+		</div>
+		
+		
+	
+	<div class="table-responsive">
+	<table id="currentSelections" class="table">
+		<caption><center>Currently in the cart: <br /><i class="fa fa-shopping-cart fa-5x"></i></center></caption>
+		<tbody>
+		
+		</tbody>
+	</table>
+	</div>
+</div>
+</body>
+</html>
